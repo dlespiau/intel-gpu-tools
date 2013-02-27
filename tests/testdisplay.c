@@ -556,7 +556,7 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	if (!test_all_modes && !force_mode && !dump_info &&
+	if (!test_all_modes && !force_mode &&
 	    !test_preferred_mode && specified_mode_num == -1)
 		test_all_modes = 1;
 
