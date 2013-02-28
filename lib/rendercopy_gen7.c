@@ -12,7 +12,11 @@
 static const uint32_t ps_kernel[][4] = {
 	{ 0x0080005a, 0x214077bd, 0x000000c0, 0x008d0040 },
 	{ 0x0080005a, 0x218077bd, 0x000000d0, 0x008d0040 },
-	{ 0x02800031, 0x2e001e3d, 0x00000140, 0x08840001 },
+	//{ 0x02800031, 0x2e001e3d, 0x00000140, 0x08840001 },
+	{ 0x00800001, 0x2e0000fd, 0x00000000, 0x3f800000 },  // R, g112
+	{ 0x00800001, 0x2e4003fd, 0x00000000, 0x00000000 },  // G, g114
+	{ 0x00800001, 0x2e8003fd, 0x00000000, 0x00000000 },  // B, g116
+	{ 0x00800001, 0x2ec003fd, 0x00000000, 0x3f800000 },  // A, g118
 	{ 0x05800031, 0x20001e3c, 0x00000e00, 0x90031000 },
 };
 
@@ -145,11 +149,11 @@ gen7_bind_buf(struct intel_batchbuffer *batch,
 		read_domain = I915_GEM_DOMAIN_SAMPLER;
 	}
 
-	ss = batch_alloc(batch, sizeof(*ss), 32);
+	ss = batch_alloc(batch, 8 * sizeof(*ss), 32);
 	offset = batch_offset(batch, ss);
 
 	annotation_add_state(&aub_annotations, AUB_TRACE_SURFACE_STATE,
-			     offset, sizeof(*ss));
+			     offset, 8 * sizeof(*ss));
 
 	ss[0] = (GEN7_SURFACE_2D << GEN7_SURFACE_TYPE_SHIFT |
 		 gen7_tiling_bits(buf->tiling) |
@@ -177,8 +181,7 @@ gen7_bind_buf(struct intel_batchbuffer *batch,
 struct vertex {
 	uint16_t x;
 	uint16_t y;
-	uint16_t s;
-	uint16_t t;
+	uint32_t color;
 };
 
 static void
@@ -207,12 +210,12 @@ gen7_emit_vertex_elements(struct intel_batchbuffer *batch)
 
 	/* s,t */
 	OUT_BATCH(0 << GEN7_VE0_VERTEX_BUFFER_INDEX_SHIFT | GEN7_VE0_VALID |
-		  GEN7_SURFACEFORMAT_R16G16_SSCALED << GEN7_VE0_FORMAT_SHIFT |
-		  offsetof(struct vertex, s) << GEN7_VE0_OFFSET_SHIFT);
+		  GEN7_SURFACEFORMAT_R8G8B8A8_USCALED << GEN7_VE0_FORMAT_SHIFT |
+		  offsetof(struct vertex, color) << GEN7_VE0_OFFSET_SHIFT);
 	OUT_BATCH(GEN7_VFCOMPONENT_STORE_SRC << GEN7_VE1_VFCOMPONENT_0_SHIFT |
 		  GEN7_VFCOMPONENT_STORE_SRC << GEN7_VE1_VFCOMPONENT_1_SHIFT |
-		  GEN7_VFCOMPONENT_STORE_0 << GEN7_VE1_VFCOMPONENT_2_SHIFT |
-		  GEN7_VFCOMPONENT_STORE_1_FLT << GEN7_VE1_VFCOMPONENT_3_SHIFT);
+		  GEN7_VFCOMPONENT_STORE_SRC << GEN7_VE1_VFCOMPONENT_2_SHIFT |
+		  GEN7_VFCOMPONENT_STORE_SRC << GEN7_VE1_VFCOMPONENT_3_SHIFT);
 }
 
 static uint32_t
@@ -234,22 +237,19 @@ gen7_create_vertex_buffer(struct intel_batchbuffer *batch,
 	v[0] = (struct vertex) {
 		.x = dst_x + width,
 		.y = dst_y + height,
-		.s = src_x + width,
-		.t = src_y + height
+		.color = 0xff0000ff,
 	};
 
 	v[1] = (struct vertex) {
 		.x = dst_x,
 		.y = dst_y + height,
-		.s = src_x,
-		.t = src_y + height
+		.color = 0xff0000ff,
 	};
 
 	v[2] = (struct vertex) {
 		.x = dst_x,
 		.y = dst_y,
-		.s = src_x,
-		.t = src_y
+		.color = 0xff0000ff,
 	};
 
 	return offset;
@@ -654,7 +654,7 @@ void gen7_render_copyfunc(struct intel_batchbuffer *batch,
 	gen7_emit_drawing_rectangle(batch, dst);
 
         OUT_BATCH(GEN7_3DPRIMITIVE | (7- 2));
-        OUT_BATCH(GEN7_3DPRIMITIVE_VERTEX_SEQUENTIAL | _3DPRIM_RECTLIST);
+        OUT_BATCH(GEN7_3DPRIMITIVE_VERTEX_SEQUENTIAL | _3DPRIM_TRILIST);
         OUT_BATCH(3);
         OUT_BATCH(0);
         OUT_BATCH(1);   /* single instance */
