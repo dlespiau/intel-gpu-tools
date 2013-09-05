@@ -574,14 +574,23 @@ set_stereo_mode(struct connector *c)
 {
 	int i;
 
+	printf("nb modes: %d\n", c->connector->count_modes);
 	for (i = 0; i < c->connector->count_modes; i++) {
 		c->mode = c->connector->modes[i];
 
 		if (!c->mode_valid)
 			continue;
 
-		if (!(c->mode.flags & DRMTEST_MODE_FLAG_3D_MASK))
+		if (!(c->mode.flags & DRMTEST_MODE_FLAG_3D_MASK)) {
+			fprintf(stderr, "No stereo for %dx%d@%dHz\n",
+				c->mode.hdisplay, c->mode.vdisplay,
+				c->mode.vrefresh);
 			continue;
+		}
+
+		fprintf(stderr, "stereo for %dx%d@%dHz\n",
+			c->mode.hdisplay, c->mode.vdisplay,
+			c->mode.vrefresh);
 
 		do_set_stereo_mode(c);
 
@@ -661,6 +670,7 @@ int update_display(void)
 			struct connector *connector = &connectors[c];
 
 			connector->id = resources->connectors[c];
+			printf("Connector: %d (id: %d)\n", c, connector->id);
 
 			connector_find_preferred_mode(connector->id,
 						      -1UL,
