@@ -179,8 +179,10 @@ scripts = \
 	drm_lib.sh \
 	$(NULL)
 
+IMAGES = pass.png
+
 EXTRA_PROGRAMS = $(TESTS_progs) $(TESTS_progs_M) $(HANG)
-EXTRA_DIST = $(TESTS_scripts) $(TESTS_scripts_M) $(scripts)
+EXTRA_DIST = $(TESTS_scripts) $(TESTS_scripts_M) $(scripts) $(IMAGES)
 CLEANFILES = $(EXTRA_PROGRAMS)
 
 AM_CFLAGS = $(DRM_CFLAGS) $(CWARNFLAGS) \
