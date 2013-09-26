@@ -1677,7 +1677,7 @@ void kmstest_dump_mode(drmModeModeInfo *mode)
 	       mode->flags,
 	       mode->type,
 	       mode->clock,
-	       stereo ? "(3D:" : "",
+	       stereo ? " (3D:" : "",
 	       stereo ? stereo : "",
 	       stereo ? ")" : "");
 	fflush(stdout);
