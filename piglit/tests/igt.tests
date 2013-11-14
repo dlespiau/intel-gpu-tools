@@ -31,20 +31,10 @@ from os import path
 from framework.core import testBinDir, TestProfile
 from framework.exectest import ExecTest
 
-#############################################################################
-##### IGTTest: Execute an intel-gpu-tools test
-#####
-##### To use this, create an igt symlink in piglit/bin which points to the root
-##### of the intel-gpu-tools sources with the compiled tests. Piglit will
-##### automatically add all tests into the 'igt' category.
-#############################################################################
-
-if not os.path.exists(os.path.join(testBinDir, 'igt')):
-    print "igt symlink not found!"
-    sys.exit(0)
-
 # Chase the piglit/bin/igt symlink to find where the tests really live.
-igtTestRoot = path.join(path.realpath(path.join(testBinDir, 'igt')), 'tests')
+piglitRoot = path.join(path.dirname(path.realpath(__file__)), os.pardir)
+igtRoot = path.join(piglitRoot, os.pardir)
+igtTestRoot = path.join(igtRoot, 'tests')
 
 profile = TestProfile()
 
