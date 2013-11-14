@@ -99,10 +99,15 @@ def main():
         old_results = core.load_results(resultsDir)
         profileFilename = old_results.options['profile']
 
-        # Changing the args to the old args allows us to set them
-        # all in one places down the way
-        args.exclude_tests = old_results.options['exclude_filter']
-        args.include_tests = old_results.options['filter']
+        # Append the test filters that were given in previous runs to the ones
+        # given in the resume invocation
+        for f in old_results.options['exclude_filter']:
+            if f not in args.exclude_tests:
+                args.exclude_tests.append(f)
+
+        for f in old_results.options['filter']:
+            if f not in args.include_tests:
+                args.include_tests.append(f)
 
     # Otherwise parse additional settings from the command line
     else:
