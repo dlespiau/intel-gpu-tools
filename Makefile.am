@@ -46,3 +46,23 @@ ChangeLog:
 	$(CHANGELOG_CMD)
 
 dist-hook: ChangeLog INSTALL
+
+#
+# Useful shortcuts to run tests
+#
+PIGLIT := $(srcdir)/piglit/piglit-run.py
+PIGLIT_SUMMARY := $(srcdir)/piglit/piglit-summary.py -s
+PIGLIT_HTML := $(srcdir)/piglit/piglit-summary-html.py
+IGT_TESTS := $(abs_srcdir)/piglit/tests/igt.tests
+TEST_TARGETS := #
+
+TEST_TARGETS += run-test
+run-tests:
+	@source $(srcdir)/scripts/build-piglit.sh && \
+	output=$$(igt_result_directory) && \
+	$(PIGLIT) $(IGT_TESTS) $$output && \
+	$(PIGLIT_HTML) $$output/html $$output/main && \
+	$(PIGLIT_SUMMARY) $$output/main
+
+
+.PHONY: $(TEST_TARGETS)
