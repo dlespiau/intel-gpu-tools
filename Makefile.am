@@ -58,9 +58,18 @@ TEST_TARGETS := #
 
 TEST_TARGETS += run-test
 run-tests:
-	@source $(srcdir)/scripts/build-piglit.sh && \
-	output=$$(igt_result_directory) && \
-	$(PIGLIT) $(IGT_TESTS) $$output && \
+	@if [ -n "$(RESUME)" ]; then \
+		[ ! -f $(RESUME)/main ] && { \
+			echo "$(RESUME) is not a valid piglit project"; \
+			exit 1; \
+		}; \
+		output=$(RESUME); \
+		echo "Resuming $(RESUME)..."; \
+		PIGLIT_FLAGS="--resume $$PIGLIT_FLAGS"; \
+	else \
+		source $(srcdir)/scripts/build-piglit.sh && \
+		output=$$(igt_result_directory); \
+	fi; \
 	$(PIGLIT) $${PIGLIT_FLAGS} $(IGT_TESTS) $$output && \
 	$(PIGLIT_HTML) $$output/html $$output/main && \
 	$(PIGLIT_SUMMARY) $$output/main
