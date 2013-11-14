@@ -61,6 +61,7 @@ run-tests:
 	@source $(srcdir)/scripts/build-piglit.sh && \
 	output=$$(igt_result_directory) && \
 	$(PIGLIT) $(IGT_TESTS) $$output && \
+	$(PIGLIT) $${PIGLIT_FLAGS} $(IGT_TESTS) $$output && \
 	$(PIGLIT_HTML) $$output/html $$output/main && \
 	$(PIGLIT_SUMMARY) $$output/main
 
