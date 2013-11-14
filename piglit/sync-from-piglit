@@ -1,0 +1,24 @@
+#!/bin/sh
+
+PIGLIT_DIR=$1
+BASE_DIR="$(cd "$(dirname "$0")"; pwd -P)"
+EXCLUDE_FILE="$BASE_DIR/sync-exclude"
+
+[ -z "$PIGLIT_DIR" ] && {
+	echo "Error: You must specify the piglit directory to sync from"
+	exit 1
+}
+
+cat <<EOF > $EXCLUDE_FILE
+tests
+*.pyc
+*_test.py
+EOF
+
+rsync -rtv --exclude-from $EXCLUDE_FILE	\
+	$PIGLIT_DIR/framework		\
+	$PIGLIT_DIR/templates		\
+	$PIGLIT_DIR/piglit-*.py		\
+	$BASE_DIR
+
+rm -f $EXCLUDE_FILE
