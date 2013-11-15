@@ -1278,6 +1278,21 @@ bool igt_run_in_simulation(void)
 	return simulation;
 }
 
+bool igt_run_quick(void)
+{
+	static int quick = -1;
+
+	if (quick == -1) {
+		if (igt_run_in_simulation())
+			quick = true;
+		else
+			quick = env_set("IGT_QUICK", false);
+	}
+
+	return quick;
+}
+
+
 /**
  * igt_skip_on_simulation - skip tests when INTEL_SIMULATION env war is set
  *
