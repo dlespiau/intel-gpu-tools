@@ -59,6 +59,7 @@ TEST_TARGETS := #
 TEST_TARGETS += run-test
 run-tests:
 	@[ -z "$(RESUME)" -a -n "$(R)" ] && RESUME=$(R); \
+	$(srcdir)/tests/check_drm_clients && \
 	if [ -n "$$RESUME" ]; then \
 		[ ! -f $$RESUME/main ] && { \
 			echo "$$RESUME is not a valid piglit project"; \
@@ -70,7 +71,7 @@ run-tests:
 	else \
 		source $(srcdir)/scripts/build-piglit.sh && \
 		output=$$(igt_result_directory); \
-	fi; \
+	fi && \
 	$(PIGLIT) $${PIGLIT_FLAGS} $(IGT_TESTS) $$output && \
 	$(PIGLIT_HTML) --overwrite $$output/html $$output/main && \
 	echo "HTML summary is at $$output/html/index.html" && \
