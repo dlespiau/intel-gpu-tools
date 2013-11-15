@@ -21,4 +21,24 @@ rsync -rtv --exclude-from $EXCLUDE_FILE	\
 	$PIGLIT_DIR/piglit-*.py		\
 	$BASE_DIR
 
+files=$(cd $BASE_DIR && find .			\
+		-not -type d 			\
+		-not -name "*.pyc" 		\
+		-not -name "*.sw?" 		\
+		-not -name sync-exclude		\
+		-not -name "Makefile*" |	\
+		grep -v -e "^.$" |		\
+		sed -e 's#^\./##')
+for f in $files; do
+	FILE_LIST="\t$f \\
+$FILE_LIST"
+done
+
+cat <<EOF > $BASE_DIR/Makefile.am
+# This file is generated, do not edit"
+EXTRA_DIST = \\
+EOF
+echo -n -e "$FILE_LIST" >> $BASE_DIR/Makefile.am
+echo -e "\t\$(NULL)"  >> $BASE_DIR/Makefile.am
+
 rm -f $EXCLUDE_FILE

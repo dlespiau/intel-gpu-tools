@@ -32,7 +32,7 @@ SUBDIRS += debugger
 endif
 
 if BUILD_TESTS
-SUBDIRS += tests
+SUBDIRS += piglit tests
 endif
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL

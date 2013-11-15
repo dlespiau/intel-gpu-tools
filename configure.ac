@@ -193,6 +193,7 @@ AC_CONFIG_FILES([
 		 lib/Makefile
 		 man/Makefile
 		 scripts/Makefile
+		 piglit/Makefile
 		 tests/Makefile
 		 tools/Makefile
 		 tools/quick_dump/Makefile
