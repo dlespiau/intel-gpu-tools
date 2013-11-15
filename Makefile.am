@@ -58,13 +58,14 @@ TEST_TARGETS := #
 
 TEST_TARGETS += run-test
 run-tests:
-	@if [ -n "$(RESUME)" ]; then \
-		[ ! -f $(RESUME)/main ] && { \
-			echo "$(RESUME) is not a valid piglit project"; \
+	@[ -z "$(RESUME)" -a -n "$(R)" ] && RESUME=$(R); \
+	if [ -n "$$RESUME" ]; then \
+		[ ! -f $$RESUME/main ] && { \
+			echo "$$RESUME is not a valid piglit project"; \
 			exit 1; \
 		}; \
-		output=$(RESUME); \
-		echo "Resuming $(RESUME)..."; \
+		output=$$RESUME; \
+		echo "Resuming $$RESUME..."; \
 		PIGLIT_FLAGS="--resume $$PIGLIT_FLAGS"; \
 	else \
 		source $(srcdir)/scripts/build-piglit.sh && \
