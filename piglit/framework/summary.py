@@ -38,6 +38,42 @@ __all__ = [
 ]
 
 
+INTERVALS = (1, 60, 3600)
+NAMES = ('s', 'min', 'hr')
+
+# Gives a human readable elapsed time
+# @amount is a string with a number of seconds
+def humanize_time(amount):
+    result = []
+
+    if amount == 'None':
+        return 'None'
+
+    amount_f = float(amount)
+    if (amount_f < 1):
+        amount_ms = amount_f * 1000
+        if amount_ms < 1:
+            return "< 1ms"
+        return "%.1fms" % amount_ms
+
+    # if < 10s, consider ms are important
+    if amount_f < 10:
+        return "%.03fs" % amount_f
+
+    # still display 1 decimal when < 60s
+    if amount_f < 60:
+        return "%.01fs" % amount_f
+
+    amount = int(amount_f)
+
+    for i in range(len(NAMES) - 1, -1, -1):
+       a = amount / INTERVALS[i]
+       if a > 0:
+          result.append("%d%s" % (a, NAMES[i]))
+          amount -= a * INTERVALS[i]
+
+    return " ".join(result)
+
 class HTMLIndex(list):
     """
     Builds HTML output to be passed to the index mako template, which will be
@@ -420,7 +456,7 @@ class Summary:
 
             with open(path.join(destination, each.name, "index.html"), 'w') as out:
                 out.write(testindex.render(name=each.name,
-                                           time=each.time_elapsed,
+                                           time=humanize_time(each.time_elapsed),
                                            options=each.options,
                                            glxinfo=each.glxinfo,
                                            lspci=each.lspci))
@@ -447,7 +483,7 @@ class Summary:
                             # disapear at somepoint
                             env=value.get('environment', None),
                             returncode=value.get('returncode', 'None'),
-                            time=value.get('time', 'None'),
+                            time=humanize_time(value.get('time', 'None')),
                             info=value.get('info', 'None'),
                             traceback=value.get('traceback', 'None'),
                             command=value.get('command', 'None'),
