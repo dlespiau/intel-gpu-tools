@@ -303,7 +303,7 @@ static inline void gem_require_ring(int fd, int ring_id)
 /* helpers to automatically reduce test runtime */
 bool igt_run_in_simulation(void);
 bool igt_run_quick(void);
-#define SLOW_QUICK(slow,quick) (igt_run_in_simulation() ? (quick) : (slow))
+#define SLOW_QUICK(slow,quick) (igt_run_quick() ? (quick) : (slow))
 /**
  * igt_skip_on_simulation - skip tests when INTEL_SIMULATION env war is set
  *
