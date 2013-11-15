@@ -187,6 +187,7 @@ HANG = \
 
 scripts = \
 	check_drm_clients \
+	check_root \
 	ddx_intel_after_fbdev \
 	debugfs_wedged \
 	drm_lib.sh \

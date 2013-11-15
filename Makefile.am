@@ -59,6 +59,7 @@ TEST_TARGETS := #
 TEST_TARGETS += run-test
 run-tests:
 	@[ -z "$(RESUME)" -a -n "$(R)" ] && RESUME=$(R); \
+	$(srcdir)/tests/check_root && \
 	$(srcdir)/tests/check_drm_clients && \
 	if [ -n "$$RESUME" ]; then \
 		[ ! -f $$RESUME/main ] && { \
