@@ -72,6 +72,7 @@ run-tests:
 	fi; \
 	$(PIGLIT) $${PIGLIT_FLAGS} $(IGT_TESTS) $$output && \
 	$(PIGLIT_HTML) --overwrite $$output/html $$output/main && \
+	echo "HTML summary is at $$output/html/index.html" && \
 	$(PIGLIT_SUMMARY) $$output/main
 
 
