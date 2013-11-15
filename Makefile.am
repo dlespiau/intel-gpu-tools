@@ -50,7 +50,7 @@ dist-hook: ChangeLog INSTALL
 #
 # Useful shortcuts to run tests
 #
-PIGLIT := $(srcdir)/piglit/piglit-run.py
+PIGLIT := $(srcdir)/piglit/piglit-run.py --no-concurrency
 PIGLIT_SUMMARY := $(srcdir)/piglit/piglit-summary.py -s
 PIGLIT_HTML := $(srcdir)/piglit/piglit-summary-html.py
 IGT_TESTS := $(abs_srcdir)/piglit/tests/igt.tests
