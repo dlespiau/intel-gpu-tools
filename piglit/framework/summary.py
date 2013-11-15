@@ -458,6 +458,7 @@ class Summary:
                 out.write(testindex.render(name=each.name,
                                            time=humanize_time(each.time_elapsed),
                                            options=each.options,
+                                           uname=each.uname,
                                            glxinfo=each.glxinfo,
                                            lspci=each.lspci))
 
