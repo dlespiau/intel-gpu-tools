@@ -71,7 +71,7 @@ run-tests:
 		output=$$(igt_result_directory); \
 	fi; \
 	$(PIGLIT) $${PIGLIT_FLAGS} $(IGT_TESTS) $$output && \
-	$(PIGLIT_HTML) $$output/html $$output/main && \
+	$(PIGLIT_HTML) --overwrite $$output/html $$output/main && \
 	$(PIGLIT_SUMMARY) $$output/main
 
 
