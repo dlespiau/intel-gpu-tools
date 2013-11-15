@@ -1280,7 +1280,7 @@ static void gem_execbuf_stress_subtest(int rounds, int wait_flags)
 
 int main(int argc, char *argv[])
 {
-	int rounds = 50;
+	int rounds = SLOW_QUICK(50, 10);
 
 	igt_subtest_init(argc, argv);
 
