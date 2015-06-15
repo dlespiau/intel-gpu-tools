@@ -37,6 +37,61 @@
 #include "igt_fb.h"
 #include "ioctl_wrappers.h"
 
+#ifndef DRM_BLEND_FUNC
+enum drm_blend_factor {
+        DRM_BLEND_FACTOR_AUTO,
+        DRM_BLEND_FACTOR_ZERO,
+        DRM_BLEND_FACTOR_ONE,
+        DRM_BLEND_FACTOR_SRC_ALPHA,
+        DRM_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+        DRM_BLEND_FACTOR_CONSTANT_ALPHA,
+        DRM_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,
+        DRM_BLEND_FACTOR_CONSTANT_ALPHA_TIMES_SRC_ALPHA,
+        DRM_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA_TIMES_SRC_ALPHA,
+};
+
+#define DRM_BLEND_FUNC(src_factor, dst_factor)          \
+        (DRM_BLEND_FACTOR_##src_factor << 16 | DRM_BLEND_FACTOR_##dst_factor)
+#define DRM_BLEND_FUNC_SRC_FACTOR(val)  (((val) >> 16) & 0xffff)
+#define DRM_BLEND_FUNC_DST_FACTOR(val)  ((val) & 0xffff)
+#endif /* DRM_BLEND_FUNC */
+
+#ifndef DRM_MODE_COLOR
+/* Color for the KMS API, ARGB (msb -> lsb) 16bits per component. */
+#define DRM_MODE_COLOR(a,r,b,g) \
+        (((__u64)(a) << 48) | ((__u64)(r) << 32) | \
+         ((__u64)(g) << 16) | (__u64)(b))
+
+/* Extract full precision, 8 bits, 10 bits and 12 bits components. */
+#define DRM_MODE_COLOR_ALPHA(color)     (((color) >> 48) & 0xffff)
+#define DRM_MODE_COLOR_RED(color)       (((color) >> 32) & 0xffff)
+#define DRM_MODE_COLOR_BLUE(color)      (((color) >> 16) & 0xffff)
+#define DRM_MODE_COLOR_GREEN(color)     ((color) & 0xffff)
+#define DRM_MODE_COLOR_ALPHA_8(color)   (((color) >> (48 + 8)) & 0xff)
+#define DRM_MODE_COLOR_RED_8(color)     (((color) >> (32 + 8)) & 0xff)
+#define DRM_MODE_COLOR_BLUE_8(color)    (((color) >> (16 + 8)) & 0xff)
+#define DRM_MODE_COLOR_GREEN_8(color)   (((color) >>  8) & 0xff)
+#define DRM_MODE_COLOR_ALPHA_10(color)  (((color) >> (48 + 6)) & 0x3ff)
+#define DRM_MODE_COLOR_RED_10(color)    (((color) >> (32 + 6)) & 0x3ff)
+#define DRM_MODE_COLOR_BLUE_10(color)   (((color) >> (16 + 6)) & 0x3ff)
+#define DRM_MODE_COLOR_GREEN_10(color)  (((color) >>  6) & 0x3ff)
+#define DRM_MODE_COLOR_ALPHA_12(color)  (((color) >> (48 + 4)) & 0xfff)
+#define DRM_MODE_COLOR_RED_12(color)    (((color) >> (32 + 4)) & 0xfff)
+#define DRM_MODE_COLOR_BLUE_12(color)   (((color) >> (16 + 4)) & 0xfff)
+#define DRM_MODE_COLOR_GREEN_12(color)  (((color) >>  4) & 0xfff)
+
+/* Handy macros to convert a DRM_MODE_COLOR() into common precisions */
+#define DRM_MODE_COLOR_TO_ARGB_8888(color)       \
+        ((DRM_MODE_COLOR_ALPHA_8(color) << 24) | \
+         (DRM_MODE_COLOR_RED_8(color)   << 16) | \
+         (DRM_MODE_COLOR_GREEN_8(color) << 8)  | \
+         DRM_MODE_COLOR_BLUE_8(color))
+#define DRM_MODE_COLOR_TO_RGB_101010(color)       \
+         ((DRM_MODE_COLOR_RED_10(color)  << 20) | \
+         (DRM_MODE_COLOR_GREEN_10(color) << 10) | \
+         DRM_MODE_COLOR_BLUE_10(color))
+#endif /* DRM_MODE_COLOR */
+
 /* Low-level helpers with kmstest_ prefix */
 
 enum pipe {
@@ -190,6 +245,8 @@ typedef struct {
 	struct igt_fb *fb;
 
 	uint32_t rotation_property;
+	uint32_t blend_func_property;
+	uint32_t blend_color_property;
 
 	/* position within pipe_src_w x pipe_src_h */
 	int crtc_x, crtc_y;
@@ -198,6 +255,8 @@ typedef struct {
 	/* panning offset within the fb */
 	unsigned int pan_x, pan_y;
 	igt_rotation_t rotation;
+	uint64_t blend_func;
+	uint64_t blend_color;
 } igt_plane_t;
 
 struct igt_pipe {
@@ -267,11 +326,23 @@ static inline bool igt_plane_supports_rotation(igt_plane_t *plane)
 	return plane->rotation_property != 0;
 }
 
+static inline bool igt_plane_supports_blend_func(igt_plane_t *plane)
+{
+	return plane->blend_func_property != 0;
+}
+
+static inline bool igt_plane_supports_blend_color(igt_plane_t *plane)
+{
+	return plane->blend_color_property != 0;
+}
+
 void igt_plane_set_fb(igt_plane_t *plane, struct igt_fb *fb);
 void igt_plane_set_position(igt_plane_t *plane, int x, int y);
 void igt_plane_set_size(igt_plane_t *plane, int w, int h);
 void igt_plane_set_panning(igt_plane_t *plane, int x, int y);
 void igt_plane_set_rotation(igt_plane_t *plane, igt_rotation_t rotation);
+void igt_plane_set_blend_func(igt_plane_t *plane, uint64_t blend_func);
+void igt_plane_set_blend_color(igt_plane_t *plane, uint64_t blend_color);
 void igt_crtc_set_background(igt_pipe_t *pipe, uint64_t background);
 void igt_fb_set_position(struct igt_fb *fb, igt_plane_t *plane,
 	uint32_t x, uint32_t y);

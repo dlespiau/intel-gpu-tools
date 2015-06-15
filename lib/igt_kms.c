@@ -26,6 +26,7 @@
  */
 
 #include "config.h"
+#include <assert.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -1097,6 +1098,18 @@ void igt_display_init(igt_display_t *display, int drm_fd)
 					   &prop_value,
 					   NULL);
 			plane->rotation = (igt_rotation_t)prop_value;
+
+			get_plane_property(display->drm_fd, drm_plane->plane_id,
+					   "blend_func",
+					   &plane->blend_func_property,
+					   &plane->blend_func,
+					   NULL);
+
+			get_plane_property(display->drm_fd, drm_plane->plane_id,
+					   "blend_color",
+					   &plane->blend_color_property,
+					   &plane->blend_color,
+					   NULL);
 		}
 
 		if (display->has_universal_planes) {
@@ -1936,6 +1949,136 @@ void igt_plane_set_rotation(igt_plane_t *plane, igt_rotation_t rotation)
 	plane->rotation = rotation;
 	igt_plane_add_property_update(plane,
 				      plane->rotation_property, rotation);
+}
+
+static const char *blend_factor_name(enum drm_blend_factor factor)
+{
+	switch (factor) {
+	case DRM_BLEND_FACTOR_AUTO:
+		return "AUTO";
+	case DRM_BLEND_FACTOR_ZERO:
+		return "ZERO";
+	case DRM_BLEND_FACTOR_ONE:
+		return "ONE";
+	case DRM_BLEND_FACTOR_SRC_ALPHA:
+		return "SRC_ALPHA";
+	case DRM_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA:
+		return "ONE_MINUS_SRC_ALPHA";
+	case DRM_BLEND_FACTOR_CONSTANT_ALPHA:
+		return "CONSTANT_ALPHA";
+	case DRM_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA:
+		return "ONE_MINUS_CONSTANT_ALPHA";
+	case DRM_BLEND_FACTOR_CONSTANT_ALPHA_TIMES_SRC_ALPHA:
+		return "CONSTANT_ALPHA_TIMES_SRC_ALPHA";
+	case DRM_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA_TIMES_SRC_ALPHA:
+		return "ONE_MINUS_CONSTANT_ALPHA_TIMES_SRC_ALPHA";
+	}
+
+
+	return "Unknown";
+}
+
+static char *blend_func_name(uint64_t blend_func)
+{
+	enum drm_blend_factor src_factor, dst_factor;
+	int ret;
+	char *name;
+
+	src_factor = DRM_BLEND_FUNC_SRC_FACTOR(blend_func);
+	dst_factor = DRM_BLEND_FUNC_DST_FACTOR(blend_func);
+
+	ret = asprintf(&name, "%s,%s", blend_factor_name(src_factor),
+		       blend_factor_name(dst_factor));
+	igt_assert_neq(ret, -1);
+
+	return name;
+}
+
+void igt_plane_set_blend_func(igt_plane_t *plane, uint64_t blend_func)
+{
+	igt_pipe_t *pipe = plane->pipe;
+	igt_display_t *display = pipe->display;
+	char *blend_func_str;
+
+	igt_assert(igt_plane_supports_rotation(plane));
+
+	blend_func_str = blend_func_name(blend_func);
+	LOG(display, "%s.%d: plane_set_blend_func(%s)\n",
+	    kmstest_pipe_name(pipe->pipe), plane->index, blend_func_str);
+	free(blend_func_str);
+
+	plane->blend_func = blend_func;
+	igt_plane_add_property_update(plane,
+				      plane->blend_func_property, blend_func);
+}
+
+/* color is ARGB 16161616 */
+static char *color_name(uint64_t color, unsigned int bpc)
+{
+	int ret;
+	char *name = NULL;
+
+	switch (bpc) {
+	case 8:
+		ret = asprintf(&name,
+			       "(0x%02"PRIx64",0x%02"PRIx64
+			       ",0x%02"PRIx64",0x%02"PRIx64")",
+			       DRM_MODE_COLOR_ALPHA_8(color),
+			       DRM_MODE_COLOR_RED_8(color),
+			       DRM_MODE_COLOR_GREEN_8(color),
+			       DRM_MODE_COLOR_BLUE_8(color));
+		break;
+	case 10:
+		ret = asprintf(&name,
+			       "(0x%02"PRIx64",0x%02"PRIx64
+			       ",0x%02"PRIx64",0x%02"PRIx64")",
+			       DRM_MODE_COLOR_ALPHA_10(color),
+			       DRM_MODE_COLOR_RED_10(color),
+			       DRM_MODE_COLOR_GREEN_10(color),
+			       DRM_MODE_COLOR_BLUE_10(color));
+		break;
+	case 12:
+		ret = asprintf(&name,
+			       "(0x%02"PRIx64",0x%02"PRIx64
+			       ",0x%02"PRIx64",0x%02"PRIx64")",
+			       DRM_MODE_COLOR_ALPHA_12(color),
+			       DRM_MODE_COLOR_RED_12(color),
+			       DRM_MODE_COLOR_GREEN_12(color),
+			       DRM_MODE_COLOR_BLUE_12(color));
+		break;
+	case 16:
+		ret = asprintf(&name,
+			       "(0x%02"PRIx64",0x%02"PRIx64
+			       ",0x%02"PRIx64",0x%02"PRIx64")",
+			       DRM_MODE_COLOR_ALPHA(color),
+			       DRM_MODE_COLOR_RED(color),
+			       DRM_MODE_COLOR_GREEN(color),
+			       DRM_MODE_COLOR_BLUE(color));
+		break;
+	default:
+		assert(0);
+	}
+
+	igt_assert_neq(ret, -1);
+	return name;
+}
+
+void igt_plane_set_blend_color(igt_plane_t *plane, uint64_t blend_color)
+{
+	igt_pipe_t *pipe = plane->pipe;
+	igt_display_t *display = pipe->display;
+	char *color_str;
+
+	igt_assert(igt_plane_supports_rotation(plane));
+
+	color_str = color_name(blend_color, 8);
+	LOG(display, "%s.%d: plane_set_blend_color(%s)\n",
+	    kmstest_pipe_name(pipe->pipe), plane->index, color_str);
+	free(color_str);
+
+	plane->blend_color = blend_color;
+	igt_plane_add_property_update(plane,
+				      plane->rotation_property, blend_color);
 }
 
 /**
