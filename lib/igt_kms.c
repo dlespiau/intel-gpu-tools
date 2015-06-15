@@ -1326,10 +1326,6 @@ static int igt_drm_plane_commit(igt_plane_t *plane,
 
 	igt_assert(plane->drm_plane);
 
-	/* it's an error to try an unsupported feature */
-	igt_assert(igt_plane_supports_rotation(plane) ||
-		   !plane->rotation_changed);
-
 	fb_id = igt_plane_get_fb_id(plane);
 	crtc_id = output->config.crtc->crtc_id;
 
@@ -1909,6 +1905,8 @@ void igt_plane_set_rotation(igt_plane_t *plane, igt_rotation_t rotation)
 {
 	igt_pipe_t *pipe = plane->pipe;
 	igt_display_t *display = pipe->display;
+
+	igt_assert(igt_plane_supports_rotation(plane));
 
 	LOG(display, "%s.%d: plane_set_rotation(%s)\n",
 	    kmstest_pipe_name(pipe->pipe),
