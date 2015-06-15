@@ -911,8 +911,10 @@ static void igt_output_refresh(igt_output_t *output)
 	if (!output->name) {
 		drmModeConnector *c = output->config.connector;
 
-		igt_assert_neq(asprintf(&output->name, "%s-%d", kmstest_connector_type_str(c->connector_type), c->connector_type_id),
-			       -1);
+		ret = asprintf(&output->name, "%s-%d",
+			       kmstest_connector_type_str(c->connector_type),
+			       c->connector_type_id);
+		igt_assert_neq(ret, -1);
 	}
 
 	LOG(display, "%s: Selecting pipe %s\n", output->name,
