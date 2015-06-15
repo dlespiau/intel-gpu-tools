@@ -881,6 +881,52 @@ static void igt_display_log_shift(igt_display_t *display, int shift)
 	igt_assert(display->log_shift >= 0);
 }
 
+#define CHECK_RETURN(r, fail) {	\
+	if (r && !fail)		\
+		return r;	\
+	igt_assert(r == 0);	\
+}
+
+static void igt_plane_add_property_update(igt_plane_t *plane,
+					  uint32_t prop_id, uint64_t prop_value)
+{
+	igt_display_t *display = plane->pipe->display;
+	unsigned int i = display->n_prop_updates;
+
+	igt_assert(i < MAX_PROPERTY_UPDATES);
+
+	display->prop_updates[i].object_type = DRM_MODE_OBJECT_PLANE;
+	display->prop_updates[i].object_id = plane->drm_plane->plane_id;
+	display->prop_updates[i].prop_id = prop_id;
+	display->prop_updates[i].new_value = prop_value;
+	display->n_prop_updates = ++i;
+}
+
+/*
+ * Flush display->prop_updates using the SET_PROPERTY ioctl (ie the non-atomic
+ * version).
+ */
+static int igt_display_flush_properties(igt_display_t *display,
+					bool fail_on_error)
+{
+	unsigned int i;
+
+	for (i = 0; i < display->n_prop_updates; i++) {
+		const igt_property_update_t *update = &display->prop_updates[i];
+		int ret;
+
+		ret = drmModeObjectSetProperty(display->drm_fd,
+					       update->object_id,
+					       update->object_type,
+					       update->prop_id,
+					       update->new_value);
+		CHECK_RETURN(ret, fail_on_error);
+	}
+
+	display->n_prop_updates = 0;
+	return 0;
+}
+
 static void igt_output_refresh(igt_output_t *output)
 {
 	igt_display_t *display = output->display;
@@ -930,16 +976,6 @@ get_plane_property(int drm_fd, uint32_t plane_id, const char *name,
 {
 	return kmstest_get_property(drm_fd, plane_id, DRM_MODE_OBJECT_PLANE,
 				    name, prop_id, value, prop);
-}
-
-static int
-igt_plane_set_property(igt_plane_t *plane, uint32_t prop_id, uint64_t value)
-{
-	igt_pipe_t *pipe = plane->pipe;
-	igt_display_t *display = pipe->display;
-
-	return drmModeObjectSetProperty(display->drm_fd, plane->drm_plane->plane_id,
-				 DRM_MODE_OBJECT_PLANE, prop_id, value);
 }
 
 static bool
@@ -1296,12 +1332,6 @@ static uint32_t igt_plane_get_fb_gem_handle(igt_plane_t *plane)
 		return 0;
 }
 
-#define CHECK_RETURN(r, fail) {	\
-	if (r && !fail)		\
-		return r;	\
-	igt_assert(r == 0);	\
-}
-
 /*
  * Commit position and fb changes to a DRM plane via the SetPlane ioctl; if the
  * DRM call to program the plane fails, we'll either fail immediately (for
@@ -1387,14 +1417,6 @@ static int igt_drm_plane_commit(igt_plane_t *plane,
 	plane->position_changed = false;
 	plane->size_changed = false;
 
-	if (plane->rotation_changed) {
-		ret = igt_plane_set_property(plane, plane->rotation_property,
-				       plane->rotation);
-
-		plane->rotation_changed = false;
-		CHECK_RETURN(ret, fail_on_error);
-	}
-
 	return 0;
 }
 
@@ -1476,9 +1498,6 @@ static int igt_primary_plane_commit_legacy(igt_plane_t *primary,
 
 	/* Primary planes can't be windowed when using a legacy commit */
 	igt_assert((primary->crtc_x == 0 && primary->crtc_y == 0));
-
-	/* nor rotated */
-	igt_assert(!primary->rotation_changed);
 
 	if (!primary->fb_changed && !primary->position_changed &&
 		!primary->size_changed && !primary->panning_changed)
@@ -1592,6 +1611,8 @@ static int igt_output_commit(igt_output_t *output,
 		ret = igt_plane_commit(plane, output, s, fail_on_error);
 		CHECK_RETURN(ret, fail_on_error);
 	}
+
+	igt_display_flush_properties(display, fail_on_error);
 
 	/*
 	 * If the crtc is enabled, wait until the next vblank before returning
@@ -1913,8 +1934,8 @@ void igt_plane_set_rotation(igt_plane_t *plane, igt_rotation_t rotation)
 	    plane->index, rotation_name(rotation));
 
 	plane->rotation = rotation;
-
-	plane->rotation_changed = true;
+	igt_plane_add_property_update(plane,
+				      plane->rotation_property, rotation);
 }
 
 /**

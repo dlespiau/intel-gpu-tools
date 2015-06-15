@@ -181,7 +181,6 @@ typedef struct {
 	unsigned int fb_changed       : 1;
 	unsigned int position_changed : 1;
 	unsigned int panning_changed  : 1;
-	unsigned int rotation_changed : 1;
 	unsigned int size_changed     : 1;
 	/*
 	 * drm_plane can be NULL for primary and cursor planes (when not
@@ -225,6 +224,16 @@ typedef struct {
 	drmModeModeInfo override_mode;
 } igt_output_t;
 
+typedef struct {
+	uint32_t object_id;
+	uint32_t object_type;
+	uint32_t prop_id;
+	uint32_t padding;
+	uint64_t new_value;
+} igt_property_update_t;
+
+#define MAX_PROPERTY_UPDATES	32
+
 struct igt_display {
 	int drm_fd;
 	int log_shift;
@@ -234,6 +243,10 @@ struct igt_display {
 	igt_output_t *outputs;
 	igt_pipe_t pipes[I915_MAX_PIPES];
 	bool has_universal_planes;
+
+	/* This holds the list of property changes we want to make at commit */
+	unsigned int n_prop_updates;
+	igt_property_update_t prop_updates[MAX_PROPERTY_UPDATES];
 };
 
 void igt_display_init(igt_display_t *display, int drm_fd);
